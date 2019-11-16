@@ -12,7 +12,7 @@ module Chrome.Launcher
   ) where
 
 import           Data.Default         (Default (..))
-import           System.Process.Typed (proc, stopProcess, withProcess)
+import           System.Process.Typed (proc, stopProcess, withProcessWait)
 
 -- | Spawn Google Chrome using the provided config, execute an action and close the browser once the action is done
 --
@@ -20,7 +20,7 @@ import           System.Process.Typed (proc, stopProcess, withProcess)
 --
 -- >>> withChrome defaultConfig (\_ -> putStrLn "Chrome started !")
 withChrome :: ChromeConfig -> (ChromeConfig -> IO a) -> IO a
-withChrome cfg action = withProcess (mkChromeProcess cfg) run
+withChrome cfg action = withProcessWait (mkChromeProcess cfg) run
   where
     mkChromeProcess ChromeConfig{..} = proc chromeExecutablePath [ "--remote-debugging-port=" <> show chromeRemoteDebuggingPort ]
 

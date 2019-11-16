@@ -1,7 +1,4 @@
-resolver: lts-13.10
+resolver: lts-14.14
 
 packages:
 - '.'
-
-extra-deps:
-- url-2.1.3
