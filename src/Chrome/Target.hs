@@ -24,6 +24,20 @@ instance FromJSON Target where
                 <*> o .: "title"
                 <*> o .: "webSocketDebuggerUrl"
 
+newtype BrowserTarget = BrowserTarget { webSocketDebuggerUrl :: DebuggingURL } deriving Show
+
+instance FromJSON BrowserTarget where
+  parseJSON = withObject "browserTarget" $ \o -> BrowserTarget
+                <$> o .: "webSocketDebuggerUrl"
+
+fetchBrowserTarget :: String -> IO (Maybe Target)
+fetchBrowserTarget url = do
+  req <- parseRequest $ url ++ "/json/version"
+  manager <- newManager defaultManagerSettings
+  res <- httpLbs req manager
+  let brw = decode . responseBody $ res :: Maybe BrowserTarget
+  return $ Target "" "Browser" . webSocketDebuggerUrl <$> brw
+
 fetchTargets :: String -> IO (Maybe [Target])
 fetchTargets url = do
   req <- parseRequest $ url ++ "/json"
