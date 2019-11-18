@@ -89,3 +89,25 @@ data TargetCrashedEvent
     } deriving Show
 
 $(deriveJSON defaultOptions{ omitNothingFields = True } ''TargetCrashedEvent)
+
+
+-- Not CDP v1.3 --
+
+data AutoAttachParams
+  = AutoAttachParams
+    { autoAtatch :: Bool
+    , waitForDegubberOnStart :: Bool
+    , flatten :: Maybe Bool
+    , windowOpen :: Maybe Bool
+    } deriving Show
+
+$(deriveJSON defaultOptions{ omitNothingFields = True } ''AutoAttachParams)
+
+data MessageParams
+  = MessageParams
+    { mesage :: String
+    , sessionId :: Maybe SessionId
+    , targetId :: Maybe TargetId
+    } deriving Show
+
+$(deriveJSON defaultOptions{ omitNothingFields = True } ''MessageParams)

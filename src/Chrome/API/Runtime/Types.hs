@@ -84,7 +84,7 @@ data EvaluateParams = EvaluateParams
                       , returnByValue         :: Maybe Bool
                       , generatePreview       :: Maybe Bool
                       , userGesture           :: Maybe Bool
-                      , awaitPromise          :: Maybe Bool
+                      , awaitPromise_          :: Maybe Bool
                       } deriving Show
 
 $(deriveJSONMsg ''EvaluateParams)
@@ -112,7 +112,7 @@ data CallFunctionOnParams = CallFunctionOnParams
                             , returnByValue       :: Maybe Bool
                             , generatePreview     :: Maybe Bool
                             , userGesture         :: Maybe Bool
-                            , awaitPromise        :: Maybe Bool
+                            , awaitPromise_        :: Maybe Bool
                             } deriving Show
 
 $(deriveJSONMsg ''CallFunctionOnParams)
@@ -192,7 +192,7 @@ data RunScriptParams = RunScriptParams
                        , includeCommandLineAPI :: Maybe Bool
                        , returnByValue         :: Maybe Bool
                        , generatePreview       :: Maybe Bool
-                       , awaitPromise          :: Maybe Bool
+                       , awaitPromise_          :: Maybe Bool
                        } deriving Show
 
 $(deriveJSONMsg ''RunScriptParams)

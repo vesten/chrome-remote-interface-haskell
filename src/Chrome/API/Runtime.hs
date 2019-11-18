@@ -1,4 +1,25 @@
-module Chrome.API.Runtime where
+module Chrome.API.Runtime
+  ( module Chrome.API.Runtime.Types
+  , evaluate
+  , awaitPromise
+  , callFunctionOn
+  , getProperties
+  , releaseObject
+  , releaseObjectGroup
+  , runIfWaitingForDebugger
+  , enable
+  , disable
+  , discardConsoleEntries
+  , compileScript
+  , runScript
+  , onExecutionContextCreated
+  , onExecutionContextDestroyed
+  , onExecutionContextsCleared
+  , onExceptionThrown
+  , onExceptionRevoked
+  , onConsoleAPICalled
+  , onInspectRequested
+  ) where
 
 import           Chrome.Target.Client
 import           Chrome.Target.Message

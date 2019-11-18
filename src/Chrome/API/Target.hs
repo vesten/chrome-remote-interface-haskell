@@ -1,5 +1,5 @@
-module Chrome.API.Target (
-      module Chrome.API.Target.Types
+module Chrome.API.Target
+    ( module Chrome.API.Target.Types
     , activateTarget
     , attachToTarget
     , closeTarget
@@ -7,6 +7,8 @@ module Chrome.API.Target (
     , deleteFromTarget
     , getTargets
     , setDiscoverTarget
+    , setAutoAttach
+    , sendMessageToTarget
     , onReceivedMessageFromTarget
     , onTargetCreated
     , onTargetDestroyed
@@ -57,3 +59,11 @@ onTargetCrashed = listenToEventMethod "Target.targetCrashed"
 
 onTargetInfoChanged :: TargetClientAsync (MethodResult TargetInfo)
 onTargetInfoChanged = listenToEventMethod "Target.targetInfoChanged"
+
+
+-- Not CDP v1.3 (From Experimental 'tip-of-tree') --
+setAutoAttach :: AutoAttachParams -> TargetClientAsync (MethodResult AnyResult)
+setAutoAttach = callMethod . Method "Target.setAutoAttach"
+
+sendMessageToTarget :: MessageParams -> TargetClientAsync (MethodResult AnyResult)
+sendMessageToTarget = callMethod . Method "Target.sendMessageToTarget"
