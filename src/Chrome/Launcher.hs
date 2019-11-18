@@ -19,6 +19,7 @@ import           System.Directory     (doesFileExist)
 import           System.Info          (os)
 import           System.Process.Typed (proc, stopProcess, withProcessWait)
 
+
 -- | Spawn Google Chrome using the provided config, execute an action and close the browser once the action is done
 --
 -- Example:
@@ -27,15 +28,17 @@ import           System.Process.Typed (proc, stopProcess, withProcessWait)
 withChrome :: ChromeConfig -> (ChromeConfig -> IO a) -> IO a
 withChrome cfg action = withProcessWait (mkChromeProcess cfg) run
   where
-    mkChromeProcess ChromeConfig{..} = proc chromeExecutablePath [ "--remote-debugging-port=" <> show chromeRemoteDebuggingPort ]
+    mkChromeProcess ChromeConfig{..} = proc executablePath $ ("--remote-debugging-port=" <> show remoteDebuggingPort) : cliOptions
 
     run p = action cfg >>= (<$ stopProcess p)
 
 data ChromeConfig
-  = ChromeConfig { chromeExecutablePath      :: FilePath
+  = ChromeConfig { executablePath      :: FilePath
                   -- ^ Path to the Google Chrome executable
-                 , chromeRemoteDebuggingPort :: Int
+                 , remoteDebuggingPort :: Int
                   -- ^ Port for using the remote debugging protocol
+                 , cliOptions :: [String]
+                  -- ^ Switches in addition to '--remote-debugging-port='
                  }
 
 instance Default ChromeConfig where
@@ -43,13 +46,14 @@ instance Default ChromeConfig where
 
 -- | Default configuration for launching "google-chrome" with the remote debugging port set to 9222
 defaultConfig :: ChromeConfig
-defaultConfig = ChromeConfig { chromeExecutablePath = "google-chrome"
-                             , chromeRemoteDebuggingPort = 9222
+defaultConfig = ChromeConfig { executablePath = "google-chrome"
+                             , remoteDebuggingPort = 9222
+                             , cliOptions = []
                              }
 
--- | locateChrome returns a path to the Chrome binary, or an empty string if
---  Chrome installation is not found.
---  Ported form https://github.com/zserge/lorca/locate.go
+-- | locateChrome returns a path to the Chrome binary, or Nothing if a
+--  Chrome installation is not found. Ported from
+--  https://github.com/zserge/lorca/locate.go
 locateChrome :: IO (Maybe FilePath)
 locateChrome = headMay <$> filterM doesFileExist paths
   where

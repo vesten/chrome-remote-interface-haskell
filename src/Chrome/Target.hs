@@ -3,6 +3,7 @@
 
 module Chrome.Target where
 
+import           Control.Retry
 import           Data.Aeson
 import           Data.Maybe
 
@@ -34,15 +35,16 @@ fetchBrowserTarget :: String -> IO (Maybe Target)
 fetchBrowserTarget url = do
   req <- parseRequest $ url ++ "/json/version"
   manager <- newManager defaultManagerSettings
-  res <- httpLbs req manager
+  res <- recoverAll (constantDelay 50000 <> limitRetries 100) (const (httpLbs req manager))
   let brw = decode . responseBody $ res :: Maybe BrowserTarget
   return $ Target "" "Browser" . webSocketDebuggerUrl <$> brw
 
 fetchTargets :: String -> IO (Maybe [Target])
 fetchTargets url = do
+  putStrLn "Trying to talk to Chrome"
   req <- parseRequest $ url ++ "/json"
   manager <- newManager defaultManagerSettings
-  res <- httpLbs req manager
+  res <- recoverAll (constantDelay 50000 <> limitRetries 100) (const (httpLbs req manager))
   return . decode . responseBody $ res
 
 type WSTargetSettings = (String, Integer, String)

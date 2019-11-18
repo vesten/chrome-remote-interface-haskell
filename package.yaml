@@ -31,6 +31,7 @@ library:
   - mtl
   - network
   - random
+  - retry
   - safe
   - stm
   - template-haskell
