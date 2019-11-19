@@ -2,7 +2,19 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
 
-module Chrome.API.Target.Types where
+module Chrome.API.Target.Types
+  ( TargetId(..)
+  , SessionId(..)
+  , BrowserContextId(..)
+  , TargetInfo(..)
+  , AttachParams(..)
+  , CreateParams(..)
+  , DeleteParams(..)
+  , ReceivedMessageEvent(..)
+  , TargetCrashedEvent(..)
+  , AutoAttachParams(..)
+  , MessageParams(..)
+  ) where
 
 import           Data.Aeson
 import           Data.Aeson.TH
