@@ -1,125 +1,118 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
-module Chrome.API.Target.Types
-  ( TargetId(..)
-  , SessionId(..)
-  , BrowserContextId(..)
-  , TargetInfo(..)
-  , AttachParams(..)
-  , CreateParams(..)
-  , DeleteParams(..)
-  , ReceivedMessageEvent(..)
-  , TargetCrashedEvent(..)
-  , AutoAttachParams(..)
-  , MessageParams(..)
-  ) where
+module Chrome.API.Target.Types where
 
 import           Data.Aeson
 import           Data.Aeson.TH
 
-newtype TargetId = TargetId String
-                  deriving Show
+newtype TargetId =
+  TargetId String
+  deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''TargetId)
+$(deriveJSON defaultOptions {omitNothingFields = True} ''TargetId)
 
-newtype SessionId = SessionId String
-                  deriving Show
+newtype SessionId =
+  SessionId String
+  deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''SessionId)
+$(deriveJSON defaultOptions {omitNothingFields = True} ''SessionId)
 
-newtype BrowserContextId = BrowserContextId String
-                  deriving Show
+newtype BrowserContextId =
+  BrowserContextId String
+  deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''BrowserContextId)
+$(deriveJSON defaultOptions {omitNothingFields = True} ''BrowserContextId)
 
-data TargetInfo
-  = TargetInfo
-    { targetId      :: TargetId
-    , targetType     :: String
-    , title :: String
-    , url :: String
-    , attached :: Bool
-    , openerId :: Maybe TargetId
-    , browserContextId :: Maybe BrowserContextId
-    } deriving Show
+data TargetInfo = TargetInfo
+  { infoTargetId         :: TargetId
+  , infoTargetType       :: String
+  , infoTitle            :: String
+  , infoUrl              :: String
+  , infoAttached         :: Bool
+  , infoOpenerId         :: Maybe TargetId
+  , infoBrowserContextId :: Maybe BrowserContextId
+  } deriving (Show)
 
 instance FromJSON TargetInfo where
-  parseJSON = withObject "targetInfo" $ \o -> TargetInfo
-                                              <$> o .: "targetId"
-                                              <*> o .: "type"
-                                              <*> o .: "title"
-                                              <*> o .: "url"
-                                              <*> o .: "attached"
-                                              <*> o .:? "openerId"
-                                              <*> o .:? "browserContextId"
+  parseJSON =
+    withObject "targetInfo" $ \o ->
+      TargetInfo <$> o .: "targetId" <*> o .: "type" <*> o .: "title" <*>
+      o .: "url" <*>
+      o .: "attached" <*>
+      o .:? "openerId" <*>
+      o .:? "browserContextId"
 
-data AttachParams
-  = AttachParams
-    { targetId :: TargetId
-    , flatten :: Maybe Bool
-    } deriving Show
+data AttachParams = AttachParams
+  { attachTargetId :: TargetId
+  , attachFlatten  :: Maybe Bool
+  } deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''AttachParams)
+instance ToJSON AttachParams where
+  toJSON (AttachParams targ fltn) =
+    object ["targetId" .= targ, "flatten" .= fltn]
 
-data CreateParams
-  = CreateParams
-    { url :: String
-    , width :: Maybe Int
-    , height :: Maybe Int
-    , browserContextId :: Maybe BrowserContextId
-    , enableBeginFrameControl :: Maybe Bool
-    , newWindow :: Maybe Bool
-    , background :: Maybe Bool
-    } deriving Show
+data CreateParams = CreateParams
+  { url                     :: String
+  , width                   :: Maybe Int
+  , height                  :: Maybe Int
+  , browserContextId        :: Maybe BrowserContextId
+  , enableBeginFrameControl :: Maybe Bool
+  , newWindow               :: Maybe Bool
+  , background              :: Maybe Bool
+  } deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''CreateParams)
+$(deriveJSON defaultOptions {omitNothingFields = True} ''CreateParams)
 
-data DeleteParams
-  = DeleteParams
-    { targetId :: Maybe TargetId
-    , sessionId :: Maybe SessionId
-    } deriving Show
+data DeleteParams = DeleteParams
+  { deleteTargetId  :: Maybe TargetId
+  , deleteSessionId :: Maybe SessionId
+  } deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''DeleteParams)
+instance ToJSON DeleteParams where
+  toJSON (DeleteParams targ fltn) =
+    object ["targetId" .= targ, "sessionId" .= fltn]
 
-data ReceivedMessageEvent
-  = ReceivedMessageEvent
-    { sessionId :: SessionId
-    , message :: String
-    , targetId :: Maybe TargetId
-    } deriving Show
+data ReceivedMessageEvent = ReceivedMessageEvent
+  { rxSessionId :: SessionId
+  , rxMessage   :: String
+  , rxTargetId  :: Maybe TargetId
+  } deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''ReceivedMessageEvent)
+instance FromJSON ReceivedMessageEvent where
+  parseJSON =
+    withObject "receivedMessageEvent" $ \o ->
+      ReceivedMessageEvent <$> o .: "sessionId" <*> o .: "message" <*>
+      o .:? "targetId"
 
-data TargetCrashedEvent
-  = TargetCrashedEvent
-    { targetId :: TargetId
-    , status :: String
-    , errorCode :: Int
-    } deriving Show
+data TargetCrashedEvent = TargetCrashedEvent
+  { crashedTargetId  :: TargetId
+  , crashedStatus    :: String
+  , crashedErrorCode :: Int
+  } deriving (Show)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''TargetCrashedEvent)
-
+instance FromJSON TargetCrashedEvent where
+  parseJSON =
+    withObject "targetCrashedEvent" $ \o ->
+      TargetCrashedEvent <$> o .: "targetId" <*> o .: "status" <*>
+      o .: "errorCode"
 
 -- Not CDP v1.3 --
+data AutoAttachParams = AutoAttachParams
+  { autoAttach             :: Bool
+  , waitForDebuggerOnStart :: Bool
+  , flatten                :: Maybe Bool
+  , windowOpen             :: Maybe Bool
+  } deriving (Show)
 
-data AutoAttachParams
-  = AutoAttachParams
-    { autoAtatch :: Bool
-    , waitForDegubberOnStart :: Bool
-    , flatten :: Maybe Bool
-    , windowOpen :: Maybe Bool
-    } deriving Show
+$(deriveJSON defaultOptions {omitNothingFields = True} ''AutoAttachParams)
 
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''AutoAttachParams)
+data MessageParams = MessageParams
+  { msgMessage   :: String
+  , msgSessionId :: Maybe SessionId
+  , msgTargetId  :: Maybe TargetId
+  } deriving (Show)
 
-data MessageParams
-  = MessageParams
-    { mesage :: String
-    , sessionId :: Maybe SessionId
-    , targetId :: Maybe TargetId
-    } deriving Show
-
-$(deriveJSON defaultOptions{ omitNothingFields = True } ''MessageParams)
+instance ToJSON MessageParams where
+  toJSON (MessageParams msg sess targ) =
+    object ["message" .= msg, "sessionId" .= sess, "targetId" .= targ]
