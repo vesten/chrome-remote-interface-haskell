@@ -5,6 +5,7 @@ module Chrome.API.Target.Types where
 
 import           Data.Aeson
 import           Data.Aeson.TH
+import           Data.Text (Text)
 
 newtype TargetId =
   TargetId String
@@ -108,7 +109,7 @@ data AutoAttachParams = AutoAttachParams
 $(deriveJSON defaultOptions {omitNothingFields = True} ''AutoAttachParams)
 
 data MessageParams = MessageParams
-  { msgMessage   :: String
+  { msgMessage   :: Text
   , msgSessionId :: Maybe SessionId
   , msgTargetId  :: Maybe TargetId
   } deriving (Show)
