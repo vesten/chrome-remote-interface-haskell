@@ -100,6 +100,14 @@ data CallArgument = CallArgument
   , argObjectId            :: Maybe RemoteObjectId
   } deriving (Show)
 
+instance ToJSON CallArgument where
+  toJSON (CallArgument val unVal obj) =
+    object
+      [ "argValue" .= val
+      , "argUnserializableValue" .= unVal
+      , "argObjectId" .= obj
+      ]
+
 data EvaluateParams = EvaluateParams
   { evalExpression            :: String
   , evalObjectGroup           :: Maybe String
@@ -109,19 +117,46 @@ data EvaluateParams = EvaluateParams
   , evalReturnByValue         :: Maybe Bool
   , evalGeneratePreview       :: Maybe Bool
   , evalUserGesture           :: Maybe Bool
-  , evalAwaitPromise_         :: Maybe Bool
+  , evalAwaitPromise          :: Maybe Bool
   } deriving (Show)
+
+instance ToJSON EvaluateParams where
+  toJSON (EvaluateParams ex grp incl silent ctx rtv prev ug wait) =
+    object
+      [ "evalExpression" .= ex
+      , "evalObjectGroup" .= grp
+      , "evalIncludeCommandLineAPI" .= incl
+      , "evalSilent" .= silent
+      , "evalContextId" .= ctx
+      , "evalReturnByValue" .= rtv
+      , "evalGeneratePreview" .= prev
+      , "evalUserGesture" .= ug
+      , "evalAwaitPromise" .= wait
+      ]
 
 data EvaluateResult = EvaluateResult
   { evalResult           :: RemoteObject
   , evalExceptionDetails :: Maybe ExceptionDetails
   } deriving (Show)
 
+instance FromJSON EvaluateResult where
+  parseJSON =
+    withObject "evaluateResult" $ \o ->
+      EvaluateResult <$> o .: "result" <*> o .: "exceptionDetails"
+
 data AwaitPromiseParams = AwaitPromiseParams
   { promisePromiseObjectId :: RemoteObjectId
   , promiseReturnByValue   :: Maybe Bool
   , promiseGeneratePreview :: Maybe Bool
   } deriving (Show)
+
+instance ToJSON AwaitPromiseParams where
+  toJSON (AwaitPromiseParams obj rtv prev) =
+    object
+      [ "promisePromiseObjectId" .= obj
+      , "promiseReturnByValue" .= rtv
+      , "promiseGeneratePreview" .= prev
+      ]
 
 data CallFunctionOnParams = CallFunctionOnParams
   { fcnObjectId            :: RemoteObjectId
@@ -131,8 +166,21 @@ data CallFunctionOnParams = CallFunctionOnParams
   , fcnReturnByValue       :: Maybe Bool
   , fcnGeneratePreview     :: Maybe Bool
   , fcnUserGesture         :: Maybe Bool
-  , fcnAwaitPromise_       :: Maybe Bool
+  , fcnAwaitPromise        :: Maybe Bool
   } deriving (Show)
+
+instance ToJSON CallFunctionOnParams where
+  toJSON (CallFunctionOnParams obj decl arg silent rbv pre ug wait) =
+    object
+      [ "fcnObjectId" .= obj
+      , "fcnFunctionDeclaration" .= decl
+      , "fcnArguments" .= arg
+      , "fcnSilent" .= silent
+      , "fcnReturnByValue" .= rbv
+      , "fcnGeneratePreview" .= pre
+      , "fcnUserGesture" .= ug
+      , "fcnAwaitPromise" .= wait
+      ]
 
 data GetPropertiesParams = GetPropertiesParams
   { objectId               :: RemoteObjectId
@@ -202,6 +250,9 @@ data ReleaseObjectParams = ReleaseObjectParams
   { relObjectId :: RemoteObjectId
   } deriving (Show)
 
+instance ToJSON ReleaseObjectParams where
+  toJSON (ReleaseObjectParams id_) = object ["relObjectId" .= id_]
+
 data ReleaseObjectGroupParams = ReleaseObjectGroupParams
   { objectGroup :: String
   } deriving (Show)
@@ -215,10 +266,24 @@ data CompileScriptParams = CompileScriptParams
   , scriptExecutionContextId :: Maybe ExecutionContextId
   } deriving (Show)
 
+instance ToJSON CompileScriptParams where
+  toJSON (CompileScriptParams ex url persist ctx) =
+    object
+      [ "scriptExpression" .= ex
+      , "scriptSourceURL" .= url
+      , "scriptPersistScript" .= persist
+      , "scriptExecutionContextId" .= ctx
+      ]
+
 data CompileScriptResult = CompileScriptResult
   { resScriptId         :: Maybe ScriptId
   , resExceptionDetails :: Maybe ExceptionDetails
   } deriving (Show)
+
+instance FromJSON CompileScriptResult where
+  parseJSON =
+    withObject "compileScriptResult" $ \o ->
+      CompileScriptResult <$> o .:? "scriptId" <*> o .:? "exceptionDetails"
 
 data RunScriptParams = RunScriptParams
   { runScriptId              :: ScriptId
@@ -228,8 +293,32 @@ data RunScriptParams = RunScriptParams
   , runIncludeCommandLineAPI :: Maybe Bool
   , runReturnByValue         :: Maybe Bool
   , runGeneratePreview       :: Maybe Bool
-  , runAwaitPromise_         :: Maybe Bool
+  , runAwaitPromise          :: Maybe Bool
   } deriving (Show)
+
+instance FromJSON RunScriptParams where
+  parseJSON =
+    withObject "runScriptParams" $ \o ->
+      RunScriptParams <$> o .: "scriptId" <*> o .:? "executionContextId" <*>
+      o .:? "objectGroup" <*>
+      o .:? "silent" <*>
+      o .:? "includeCommandLineAPI" <*>
+      o .:? "returnByValue" <*>
+      o .:? "generatePreview" <*>
+      o .:? "awaitPromise"
+
+instance ToJSON RunScriptParams where
+  toJSON (RunScriptParams id_ ctx grp silent api rtn prev wait) =
+    object
+      [ "runScriptId" .= id_
+      , "runExecutionContextId" .= ctx
+      , "runObjectGroup" .= grp
+      , "runSilent" .= silent
+      , "runIncludeCommandLineAPI" .= api
+      , "runReturnByValue" .= rtn
+      , "runGeneratePreview" .= prev
+      , "runAwaitPromise" .= wait
+      ]
 
 data ExecutionContextDescription = ExecutionContextDescription
   { ctxId      :: ExecutionContextId
@@ -278,6 +367,11 @@ data ExceptionRevokedEvent = ExceptionRevokedEvent
   , revokedExceptionId :: Int
   } deriving (Show)
 
+instance FromJSON ExceptionRevokedEvent where
+  parseJSON =
+    withObject "exceptionRevokedEvent" $ \o ->
+      ExceptionRevokedEvent <$> o .: "reason" <*> o .: "exceptionId"
+
 data ConsoleAPICalledEvent = ConsoleAPICalledEvent
   { calledType               :: String
   , calledArgs               :: [RemoteObject]
@@ -286,9 +380,20 @@ data ConsoleAPICalledEvent = ConsoleAPICalledEvent
   , calledStackTrace         :: Maybe StackTrace
   } deriving (Show)
 
+instance FromJSON ConsoleAPICalledEvent where
+  parseJSON =
+    withObject "exceptionRevokedEvent" $ \o ->
+      ConsoleAPICalledEvent <$> o .: "type" <*> o .: "args" <*>
+      o .: "executionContextId" <*>
+      o .: "timestamp" <*>
+      o .:? "stackTrace"
+
 data InspectRequestedEvent = InspectRequestedEvent
   { object :: RemoteObject
   , hints  :: Value
   } deriving (Show)
 
-$(deriveJSONMsg ''InspectRequestedEvent)
+instance FromJSON InspectRequestedEvent where
+  parseJSON =
+    withObject "inspectRequestedEvent" $ \o ->
+      InspectRequestedEvent <$> o .: "object" <*> o .: "hints"
