@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Chrome.Target.Client where
 
 import           Network.WebSockets           as WS
@@ -8,7 +10,8 @@ import           Control.Monad.Trans.Reader
 
 import           Data.Aeson
 import qualified Data.ByteString.Lazy.Char8   as B8
-import           Data.Text                    as T
+import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as T (putStrLn)
 
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM.TChan
@@ -19,16 +22,18 @@ import           Chrome.Target.Message
 
 socketClient :: (TChan T.Text, TChan T.Text) -> WS.ClientApp ()
 socketClient (inChan, outChan) conn = do
-  readProc <- async $ forever $ do
-    msgReceived <- WS.receiveData conn
-    -- T.putStrLn msgReceived >> putStrLn "\n\n"
-    atomically $ writeTChan outChan msgReceived
-
-  writeProc <- async $ forever $ do
-    msg <- atomically $ readTChan inChan
-    -- T.putStrLn msg >> putStrLn "\n\n"
-    WS.sendTextData conn msg
-
+  readProc <-
+    async $
+    forever $ do
+      msgReceived <- WS.receiveData conn
+      T.putStrLn msgReceived >> putStrLn "\n\n"
+      atomically $ writeTChan outChan msgReceived
+  writeProc <-
+    async $
+    forever $ do
+      msg <- atomically $ readTChan inChan
+      T.putStrLn msg >> putStrLn "\n\n"
+      WS.sendTextData conn msg
   mapM_ wait [readProc, writeProc]
 
 type TargetClientChannels = (TChan T.Text, TChan T.Text)
@@ -43,56 +48,73 @@ dupWSChannels = do
   (chanCmd, chanRes) <- ask
   liftIO . atomically $ (,) <$> dupTChan chanCmd <*> dupTChan chanRes
 
-callMethod :: (ToJSON req, Show res, FromJSON res) => Method req -> TargetClientAsync (MethodResult res)
+callMethod ::
+     (ToJSON req, Show res, FromJSON res)
+  => Method req
+  -> TargetClientAsync (MethodResult res)
 callMethod cmd = do
   (chanCmd, chanRes) <- dupWSChannels
   msg <- liftIO $ methodToMsg cmd
   liftIO $ do
-      atomically $ writeTChan chanCmd (msgToText msg)
-      async (waitResponse chanRes (msgId msg))
-
+    atomically $ writeTChan chanCmd (msgToText msg)
+    putStrLn "Msg sent..."
+    async (waitResponse chanRes (msgId msg))
   where
-    waitResponse :: (FromJSON res) => TChan T.Text -> Int -> IO (MethodResult res)
+    waitResponse ::
+         (FromJSON res) => TChan T.Text -> Int -> IO (MethodResult res)
     waitResponse chanRes' id' = do
+      putStrLn "Awaiting response..."
       res <- atomically $ readTChan chanRes'
+      putStrLn $ "resp: " ++ show res
       let decodedMsg = decode . B8.pack . T.unpack $ res
       case decodedMsg of
-        Just (Result result) -> if _resId result == id'
-                                  then return $ _resResult result
-                                  else waitResponse chanRes' id'
+        Just (Result result) ->
+          if _resId result == id'
+            then return $ _resResult result
+            else waitResponse chanRes' id'
         _ -> waitResponse chanRes' id'
-
 
 type TargetClientAsync res = TargetClient (Async res)
 
-listenToEventMethod :: (FromJSON res) => String -> TargetClientAsync (MethodResult res)
+listenToEventMethod ::
+     (FromJSON res) => String -> TargetClientAsync (MethodResult res)
 listenToEventMethod method = do
-    (_, chanRes) <- dupWSChannels
-    liftIO $ async $ waitForMsg method chanRes
-    where
-        waitForMsg :: (FromJSON res) => String -> TChan T.Text -> IO (MethodResult res)
-        waitForMsg method' inChan = do
-            res <- atomically $ readTChan inChan
-            let event = decode . B8.pack . T.unpack $ res
-            case event of
-                Just (Event event') -> if _eventMethod event' == method'
-                                            then pure $ _eventContent event'
-                                            else waitForMsg method inChan
-                _ -> waitForMsg method inChan
+  (_, chanRes) <- dupWSChannels
+  liftIO $ async $ waitForMsg method chanRes
+  where
+    waitForMsg ::
+         (FromJSON res) => String -> TChan T.Text -> IO (MethodResult res)
+    waitForMsg method' inChan = do
+      res <- atomically $ readTChan inChan
+      let event = decode . B8.pack . T.unpack $ res
+      case event of
+        Just (Event event') ->
+          if _eventMethod event' == method'
+            then pure $ _eventContent event'
+            else waitForMsg method inChan
+        _ -> waitForMsg method inChan
 
 wsServer :: Target -> TargetClient (Maybe ())
-wsServer page = case wsClientFromTarget page of
-  Nothing -> pure Nothing
-  Just (domain', port', path') -> do
-    (chanCmd, chanRes) <- dupWSChannels
-    void . liftIO . async $ WS.runClient domain' (fromInteger port') path' (socketClient (chanCmd, chanRes))
-
+wsServer page =
+  case wsClientFromTarget page of
+    Nothing -> pure Nothing
+    Just (domain', port', path') -> do
+      (chanCmd, chanRes) <- dupWSChannels
+      void . liftIO . async $
+        WS.runClient
+          domain'
+          (fromInteger port')
+          path'
+          (socketClient (chanCmd, chanRes))
     -- TODO : remove this or use Either to encode error
-    return $ Just ()
+      liftIO $ putStrLn "websocket ok..."
+      return $ Just ()
 
 withTarget :: Target -> TargetClient a -> IO ()
 withTarget page actions = do
+  putStrLn $ "page: " ++ show page
   channels <- createWSChannels
+  -- putStrLn $ "channels: " ++ show channels
   runReaderT actions' channels
   where
     actions' :: TargetClient ()
