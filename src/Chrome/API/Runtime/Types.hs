@@ -100,6 +100,12 @@ data CallArgument = CallArgument
   , argObjectId            :: Maybe RemoteObjectId
   } deriving (Show)
 
+instance FromJSON CallArgument where
+  parseJSON =
+    withObject "callArgument" $ \o ->
+      CallArgument <$> o .:? "value" <*> o .:? "unserializedValue" <*>
+      o .:? "objectId"
+
 instance ToJSON CallArgument where
   toJSON (CallArgument val unVal obj) =
     object
@@ -217,9 +223,9 @@ instance FromJSON PropertyDescriptor where
       o .:? "symbol"
 
 instance ToJSON PropertyDescriptor where
-  toJSON (PropertyDescriptor name val wrt get set cnf enum thw is sym) =
+  toJSON (PropertyDescriptor pName val wrt get set cnf enum thw is sym) =
     object
-      [ "propName" .= name
+      [ "propName" .= pName
       , "propValue" .= val
       , "propWriteable" .= wrt
       , "propGet" .= get
@@ -267,10 +273,10 @@ data CompileScriptParams = CompileScriptParams
   } deriving (Show)
 
 instance ToJSON CompileScriptParams where
-  toJSON (CompileScriptParams ex url persist ctx) =
+  toJSON (CompileScriptParams ex url_ persist ctx) =
     object
       [ "scriptExpression" .= ex
-      , "scriptSourceURL" .= url
+      , "scriptSourceURL" .= url_
       , "scriptPersistScript" .= persist
       , "scriptExecutionContextId" .= ctx
       ]
@@ -335,11 +341,11 @@ instance FromJSON ExecutionContextDescription where
       o .:? "auxData"
 
 instance ToJSON ExecutionContextDescription where
-  toJSON (ExecutionContextDescription id_ origin name aux) =
+  toJSON (ExecutionContextDescription id_ origin eName aux) =
     object
       [ "ctxId" .= id_
       , "ctxOrigin" .= origin
-      , "ctxName" .= name
+      , "ctxName" .= eName
       , "ctxAuxData" .= aux
       ]
 

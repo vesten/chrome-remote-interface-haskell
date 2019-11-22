@@ -3,7 +3,7 @@
 
 module Chrome.Target where
 
--- import           Control.Retry
+import           Control.Retry
 import           Data.Aeson
 import           Data.Maybe
 
