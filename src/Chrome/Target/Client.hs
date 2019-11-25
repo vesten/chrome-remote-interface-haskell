@@ -70,7 +70,9 @@ callMethod cmd = do
       case decodedMsg of
         Just (Result result) ->
           if _resId result == id'
-            then return $ _resResult result
+            then do
+              putStrLn "returning from waitResponse..."
+              return $ _resResult result
             else waitResponse chanRes' id'
         _ -> waitResponse chanRes' id'
 

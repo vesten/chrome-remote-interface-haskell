@@ -6,7 +6,7 @@ module Chrome.API.Target
     , createTarget
     , deleteFromTarget
     , getTargets
-    , setDiscoverTarget
+    , setDiscoverTargets
     , setAutoAttach
     , sendMessageToTarget
     , onReceivedMessageFromTarget
@@ -41,8 +41,8 @@ deleteFromTarget = callMethod . Method "Target.deleteFromTarget"
 getTargets :: TargetClientAsync (MethodResult [TargetInfo])
 getTargets = callMethod $ Method "Target.getTargets" noParam
 
-setDiscoverTarget :: Bool -> TargetClientAsync (MethodResult AnyResult)
-setDiscoverTarget discover' = callMethod $ Method "Target.setDiscoverTarget"
+setDiscoverTargets :: Bool -> TargetClientAsync (MethodResult AnyResult)
+setDiscoverTargets discover' = callMethod $ Method "Target.setDiscoverTargets"
                                                   (insert "discover" discover' empty)
 
 onReceivedMessageFromTarget :: TargetClientAsync (MethodResult ReceivedMessageEvent)
