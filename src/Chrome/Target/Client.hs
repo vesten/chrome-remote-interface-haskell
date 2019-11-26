@@ -22,18 +22,23 @@ import           Chrome.Target.Message
 
 socketClient :: (TChan T.Text, TChan T.Text) -> WS.ClientApp ()
 socketClient (inChan, outChan) conn = do
+  T.putStrLn "In socketClient..."
   readProc <-
     async $
     forever $ do
+      T.putStrLn "Collecting chrome msg..."
       msgReceived <- WS.receiveData conn
       T.putStrLn msgReceived >> putStrLn "\n\n"
       atomically $ writeTChan outChan msgReceived
   writeProc <-
     async $
     forever $ do
+      T.putStrLn "Getting msg to send..."
       msg <- atomically $ readTChan inChan
       T.putStrLn msg >> putStrLn "\n\n"
-      WS.sendTextData conn msg
+      let msg' = "{\"params\":{}, \"method\":\"Page.enable\",\"id\":17}"
+      T.putStrLn msg'
+      WS.sendTextData conn msg'
   mapM_ wait [readProc, writeProc]
 
 type TargetClientChannels = (TChan T.Text, TChan T.Text)
@@ -56,6 +61,7 @@ callMethod cmd = do
   (chanCmd, chanRes) <- dupWSChannels
   msg <- liftIO $ methodToMsg cmd
   liftIO $ do
+    T.putStrLn $ "Sending: " <> msgToText msg
     atomically $ writeTChan chanCmd (msgToText msg)
     putStrLn "Msg sent..."
     async (waitResponse chanRes (msgId msg))
@@ -101,7 +107,9 @@ wsServer page =
   case wsClientFromTarget page of
     Nothing -> pure Nothing
     Just (domain', port', path') -> do
+      liftIO $ putStrLn "In wsServer..."
       (chanCmd, chanRes) <- dupWSChannels
+      liftIO $ putStrLn "Dup'd channels..."
       void . liftIO . async $
         WS.runClient
           domain'

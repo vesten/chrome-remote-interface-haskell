@@ -5,7 +5,7 @@ module Chrome.API.Target.Types where
 
 import           Data.Aeson
 import           Data.Aeson.TH
-import           Data.Text (Text)
+import           Data.Text     (Text)
 
 newtype TargetId =
   TargetId String
@@ -43,6 +43,13 @@ instance FromJSON TargetInfo where
       o .: "attached" <*>
       o .:? "openerId" <*>
       o .:? "browserContextId"
+
+data TargetInfos = TargetInfos
+  { targetInfos :: [TargetInfo]
+  } deriving (Show)
+
+instance FromJSON TargetInfos where
+  parseJSON = withObject "targetInfos" $ \o -> TargetInfos <$> o .: "targetInfo"
 
 data AttachParams = AttachParams
   { attachTargetId :: TargetId
