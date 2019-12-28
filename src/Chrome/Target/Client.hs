@@ -57,22 +57,20 @@ callMethod cmd = do
   msg <- liftIO $ methodToMsg cmd
   liftIO $ do
     atomically $ writeTChan chanCmd (msgToText msg)
-    putStrLn "Msg sent..."
+    -- putStrLn "Msg sent..."
     async (waitResponse chanRes (msgId msg))
   where
     waitResponse ::
          (FromJSON res) => TChan T.Text -> Int -> IO (MethodResult res)
     waitResponse chanRes' id' = do
-      putStrLn "Awaiting response..."
+      -- putStrLn "Awaiting response..."
       res <- atomically $ readTChan chanRes'
-      putStrLn $ "resp: " ++ show res
+
       let decodedMsg = decode . B8.pack . T.unpack $ res
       case decodedMsg of
         Just (Result result) ->
           if _resId result == id'
-            then do
-              putStrLn "returning from waitResponse..."
-              return $ _resResult result
+            then return $ _resResult result
             else waitResponse chanRes' id'
         _ -> waitResponse chanRes' id'
 
@@ -109,7 +107,7 @@ wsServer page =
           path'
           (socketClient (chanCmd, chanRes))
     -- TODO : remove this or use Either to encode error
-      liftIO $ putStrLn "websocket ok..."
+      -- liftIO $ putStrLn "websocket ok..."
       return $ Just ()
 
 withTarget :: Target -> TargetClient a -> IO ()

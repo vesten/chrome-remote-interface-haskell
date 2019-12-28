@@ -38,19 +38,18 @@ fetchBrowserTarget :: String -> IO (Maybe Target)
 fetchBrowserTarget url = do
   req <- parseRequest $ url ++ "/json/version"
   manager <- newManager defaultManagerSettings
-  putStrLn "Making http call"
   res <-
     recoverAll
       (constantDelay 1150000 <> limitRetries 100)
       (const (httpLbs req manager))
-  putStrLn "Done with retries"
+  -- putStrLn "Done with retries"
   let brw = decode . responseBody $ res :: Maybe BrowserTarget
   putStrLn $ "brw: " ++ show brw
   return $ Target "" "Browser" . webSocketDebuggerUrl <$> brw
 
 fetchTargets :: String -> IO (Maybe [Target])
 fetchTargets url = do
-  putStrLn "Trying to talk to Chrome"
+  -- putStrLn "Trying to talk to Chrome"
   req <- parseRequest $ url ++ "/json"
   manager <- newManager defaultManagerSettings
   -- res <- httpLbs req manager

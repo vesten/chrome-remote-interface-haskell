@@ -14,6 +14,7 @@ module Chrome.API.Target
     , onTargetDestroyed
     , onTargetCrashed
     , onTargetInfoChanged
+    , onAttachedToTarget
     ) where
 
 import           Data.Map              (empty, insert)
@@ -38,7 +39,8 @@ createTarget = callMethod . Method "Target.createTarget"
 deleteFromTarget :: DeleteParams -> TargetClientAsync (MethodResult AnyResult)
 deleteFromTarget = callMethod . Method "Target.deleteFromTarget"
 
-getTargets :: TargetClientAsync (MethodResult [TargetInfo])
+-- getTargets :: TargetClientAsync (MethodResult [TargetInfo])
+getTargets :: TargetClientAsync (MethodResult TargetInfos)
 getTargets = callMethod $ Method "Target.getTargets" noParam
 
 setDiscoverTargets :: Bool -> TargetClientAsync (MethodResult AnyResult)
@@ -67,3 +69,6 @@ setAutoAttach = callMethod . Method "Target.setAutoAttach"
 
 sendMessageToTarget :: MessageParams -> TargetClientAsync (MethodResult AnyResult)
 sendMessageToTarget = callMethod . Method "Target.sendMessageToTarget"
+
+onAttachedToTarget :: TargetClientAsync (MethodResult AttachedInfo)
+onAttachedToTarget = listenToEventMethod "Target.attachedToTarget"

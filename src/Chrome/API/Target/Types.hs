@@ -5,19 +5,18 @@ module Chrome.API.Target.Types where
 
 import           Data.Aeson
 import           Data.Aeson.TH
+import           Data.Char (toLower)
 import           Data.Text (Text)
 
 newtype TargetId =
   TargetId String
   deriving (Show)
 
-$(deriveJSON defaultOptions {omitNothingFields = True} ''TargetId)
+$(deriveJSON defaultOptions ''TargetId)
 
-newtype SessionId =
-  SessionId String
-  deriving (Show)
+newtype SessionId = SessionId { sessionId :: String} deriving (Show)
 
-$(deriveJSON defaultOptions {omitNothingFields = True} ''SessionId)
+$(deriveJSON defaultOptions ''SessionId)
 
 newtype BrowserContextId =
   BrowserContextId String
@@ -43,6 +42,15 @@ instance FromJSON TargetInfo where
       o .: "attached" <*>
       o .:? "openerId" <*>
       o .:? "browserContextId"
+
+data TargetInfos = TargetInfos
+  { infoTargetInfos         :: [TargetInfo]
+  } deriving (Show)
+
+instance FromJSON TargetInfos where
+  parseJSON =
+    withObject "targetInfos" $ \o ->
+      TargetInfos <$> o .: "targetInfos"
 
 data AttachParams = AttachParams
   { attachTargetId :: TargetId
@@ -117,3 +125,22 @@ data MessageParams = MessageParams
 instance ToJSON MessageParams where
   toJSON (MessageParams msg sess targ) =
     object ["message" .= msg, "sessionId" .= sess, "targetId" .= targ]
+
+data AttachedInfo = AttachedInfo
+  { attSessionId :: SessionId
+  , attTargetInfo :: TargetInfo
+  , attWaitingForDebugger :: Bool
+  } deriving Show
+
+instance FromJSON AttachedInfo where
+  parseJSON =
+    withObject "attachedInfo" $ \o ->
+      AttachedInfo <$> o .: "sessionId" <*> o .: "targetInfo" <*> o .: "waitingForDebugger"
+
+-- $(deriveJSON defaultOptions {fieldLabelModifier = dropCamel 3} ''AttachedInfo)
+
+dropCamel :: Int -> String -> String
+dropCamel n s = uncap $ drop 3 s
+  where
+    uncap [] = []
+    uncap (c:cs) = toLower c : cs
