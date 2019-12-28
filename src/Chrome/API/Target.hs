@@ -44,11 +44,14 @@ getTargets :: TargetClientAsync (MethodResult TargetInfos)
 getTargets = callMethod $ Method "Target.getTargets" noParam
 
 setDiscoverTargets :: Bool -> TargetClientAsync (MethodResult AnyResult)
-setDiscoverTargets discover' = callMethod $ Method "Target.setDiscoverTargets"
-                                                  (insert "discover" discover' empty)
+setDiscoverTargets discover' =
+  callMethod $
+  Method "Target.setDiscoverTargets" (insert "discover" discover' empty)
 
-onReceivedMessageFromTarget :: TargetClientAsync (MethodResult ReceivedMessageEvent)
-onReceivedMessageFromTarget = listenToEventMethod "Target.receivedMessageFromTarget"
+onReceivedMessageFromTarget ::
+     TargetClientAsync (MethodResult ReceivedMessageEvent)
+onReceivedMessageFromTarget =
+  listenToEventMethod "Target.receivedMessageFromTarget"
 
 onTargetCreated :: TargetClientAsync (MethodResult TargetInfo)
 onTargetCreated = listenToEventMethod "Target.targetCreated"
@@ -62,12 +65,12 @@ onTargetCrashed = listenToEventMethod "Target.targetCrashed"
 onTargetInfoChanged :: TargetClientAsync (MethodResult TargetInfo)
 onTargetInfoChanged = listenToEventMethod "Target.targetInfoChanged"
 
-
 -- Not CDP v1.3 (From Experimental 'tip-of-tree') --
 setAutoAttach :: AutoAttachParams -> TargetClientAsync (MethodResult AnyResult)
 setAutoAttach = callMethod . Method "Target.setAutoAttach"
 
-sendMessageToTarget :: MessageParams -> TargetClientAsync (MethodResult AnyResult)
+sendMessageToTarget ::
+     MessageParams -> TargetClientAsync (MethodResult AnyResult)
 sendMessageToTarget = callMethod . Method "Target.sendMessageToTarget"
 
 onAttachedToTarget :: TargetClientAsync (MethodResult AttachedInfo)

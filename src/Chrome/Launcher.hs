@@ -59,7 +59,7 @@ locateChrome = headMay <$> filterM doesFileExist paths
   where
     paths =
       case os of
-        "windows" ->
+        "mingw32" ->
           -- let
           --   pfx = [ unsafePerformIO $ getEnv "LocalAppData"
           --         , unsafePerformIO $ getEnv "ProgramFiles"
@@ -73,6 +73,7 @@ locateChrome = headMay <$> filterM doesFileExist paths
           --  in [a++b | a <- pfx, b <- sfx]
           [ -- "C:/Users/" + os.Getenv("USERNAME") + "/AppData/Local/Google/Chrome/Application/chrome.exe"
             "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+            -- "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
           , "C:/Program Files/Google/Application/chrome.exe"
           , "C:/Program Files/Google/Chrome/Application/chrome.exe"
           -- , "C:/Users/" + os.Getenv("USERNAME") + "/AppData/Local/Chromium/Application/chrome.exe"

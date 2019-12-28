@@ -140,7 +140,7 @@ instance FromJSON AttachedInfo where
 -- $(deriveJSON defaultOptions {fieldLabelModifier = dropCamel 3} ''AttachedInfo)
 
 dropCamel :: Int -> String -> String
-dropCamel n s = uncap $ drop 3 s
+dropCamel n s = uncap $ drop n s
   where
     uncap [] = []
     uncap (c:cs) = toLower c : cs
